@@ -1,7 +1,7 @@
 package main
 
 import (
-    "fmt"
+    _ "github.com/jschaefer-io/aoc2021/day01"
     "github.com/jschaefer-io/aoc2021/orchestration"
     "os"
     "strings"
@@ -16,6 +16,9 @@ func getAocWorkload() orchestration.WorkLoad {
     for _, entry := range dir {
         if !entry.IsDir() {
             name := strings.ReplaceAll(entry.Name(), ".txt", "")
+            if !strings.Contains(entry.Name(), ".txt") {
+                continue
+            }
             content, err := os.ReadFile("./_inputs/" + entry.Name())
             if err != nil {
                 panic(err)
@@ -27,6 +30,5 @@ func getAocWorkload() orchestration.WorkLoad {
 }
 
 func main() {
-    fmt.Println()
     orchestration.MainDispatcher.Start(getAocWorkload())
 }
