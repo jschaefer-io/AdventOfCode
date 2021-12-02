@@ -7,40 +7,49 @@ import (
     "strings"
 )
 
+type Operation struct {
+    Name  string
+    Value int
+}
+
 type Submarine struct {
     Horizontal int
     Depth      int
     Aim        int
+    opHandler  func(op Operation, s *Submarine) error
 }
 
-func (s *Submarine) Move(op Operation, b bool) error {
+func (s *Submarine) Move(op Operation) error{
+    return s.opHandler(op, s)
+}
+
+func MoveA(op Operation, s *Submarine) error {
     switch op.Name {
     case "forward":
         s.Horizontal += op.Value
-        if b {
-            s.Depth += op.Value * s.Aim
-        }
     case "down":
-        if b {
-            s.Aim += op.Value
-        } else {
-            s.Depth += op.Value
-        }
+        s.Depth += op.Value
     case "up":
-        if b {
-            s.Aim -= op.Value
-        } else {
-            s.Depth -= op.Value
-        }
+        s.Depth -= op.Value
     default:
         return errors.New("op not defined")
     }
     return nil
 }
 
-type Operation struct {
-    Name  string
-    Value int
+func MoveB(op Operation, s *Submarine) error {
+    switch op.Name {
+    case "forward":
+        s.Horizontal += op.Value
+        s.Depth += op.Value * s.Aim
+    case "down":
+        s.Aim += op.Value
+    case "up":
+        s.Aim -= op.Value
+    default:
+        return errors.New("op not defined")
+    }
+    return nil
 }
 
 func init() {
@@ -56,13 +65,12 @@ func init() {
             ops = append(ops, Operation{lData[0], value})
         }
 
-        subs := [2]*Submarine{
-            {},
-            {},
-        }
+        subs := make([]*Submarine, 0)
+        subs = append(subs, &Submarine{opHandler: MoveA})
+        subs = append(subs, &Submarine{opHandler: MoveB})
         for _, op := range ops {
-            for i, sub := range subs {
-                err := sub.Move(op, i != 0)
+            for _, sub := range subs {
+                err := sub.Move(op)
                 if err != nil {
                     return err
                 }
