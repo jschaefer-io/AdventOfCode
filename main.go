@@ -2,6 +2,7 @@ package main
 
 import (
     _ "github.com/jschaefer-io/aoc2021/day01"
+    _ "github.com/jschaefer-io/aoc2021/day02"
     "github.com/jschaefer-io/aoc2021/orchestration"
     "os"
     "strings"

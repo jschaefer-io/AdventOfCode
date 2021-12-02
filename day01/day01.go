@@ -1,7 +1,6 @@
 package day01
 
 import (
-    "fmt"
     "github.com/jschaefer-io/aoc2021/orchestration"
     "strconv"
     "strings"
@@ -33,8 +32,8 @@ func init() {
             v, _ := strconv.Atoi(line)
             depths = append(depths, v)
         }
-        result.AddResult(fmt.Sprintf("%d", traverseAndCompare(1, depths)))
-        result.AddResult(fmt.Sprintf("%d", traverseAndCompare(3, depths)))
+        result.AddResult(strconv.Itoa(traverseAndCompare(1, depths)))
+        result.AddResult(strconv.Itoa(traverseAndCompare(3, depths)))
         return nil
     }))
 }
