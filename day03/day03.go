@@ -2,7 +2,6 @@ package day03
 
 import (
     "errors"
-    "fmt"
     "github.com/jschaefer-io/aoc2021/orchestration"
     "strconv"
     "strings"
@@ -59,7 +58,7 @@ func applyNot(a uint) uint {
     return ^a
 }
 
-func reduceDerive(list []Input, derive func(queue []Input) (Input, error)) (Input, error) {
+func ReduceDerive(list []Input, derive func(queue []Input) (Input, error)) (Input, error) {
     queue := list
     bitIndex := 0
     for len(queue) > 1 {
@@ -106,13 +105,13 @@ func init() {
         result.AddResult(strconv.Itoa(int(a.Value * aInverse.Value)))
 
         //B
-        bOxy, err := reduceDerive(list, func(queue []Input) (Input, error) {
+        bOxy, err := ReduceDerive(list, func(queue []Input) (Input, error) {
             return DeriveInput(queue)
         })
         if err != nil {
             return err
         }
-        bCo2, err := reduceDerive(list, func(queue []Input) (Input, error) {
+        bCo2, err := ReduceDerive(list, func(queue []Input) (Input, error) {
             l, err := DeriveInput(queue)
             if err != nil {
                 return l, err
@@ -122,11 +121,7 @@ func init() {
         if err != nil {
             return err
         }
-        fmt.Println(bOxy, bCo2)
         result.AddResult(strconv.Itoa(int(bOxy.Value * bCo2.Value)))
-
-        // 4514787 high
-
         return nil
     }))
 }
