@@ -8,67 +8,73 @@ import (
 )
 
 type Input struct {
-    S     string
-    Value uint
+    length int
+    value  uint
+}
+
+func (i Input) Value() uint {
+    return i.value
+}
+
+func (i Input) Length() int {
+    return i.length
+}
+
+func (i Input) CheckBit(position int) bool {
+    return (i.value & (1 << position)) > 0
+}
+
+func NewInput(value string) (Input, error) {
+    v, err := strconv.ParseInt(value, 2, 64)
+    if err != nil {
+        return Input{}, err
+    }
+    return Input{
+        length: len(value),
+        value:  uint(v),
+    }, nil
+}
+
+func (i *Input) setValue(v uint) {
+    var bitMap uint = 0
+    for u := 0; u < i.length-1; u++ {
+        bitMap |= 1 << u
+    }
+    i.value = v & bitMap
 }
 
 func (i Input) Transform(transformer func(base uint) uint) Input {
-    var mask uint = 0
-    for i := range i.S {
-        mask |= 1 << i
-    }
-    v := transformer(i.Value) & mask
-    s := strconv.FormatInt(int64(v), 2)
-    deltaLength := len(i.S) - len(s)
-    var sb strings.Builder
-    for i := 0; i < deltaLength; i++ {
-        sb.WriteString("0")
-    }
-    sb.WriteString(s)
-    return Input{sb.String(), v}
+    value := transformer(i.value)
+    i.setValue(value)
+    return i
 }
 
-func DeriveInput(list []Input) (Input, error) {
-    var sb strings.Builder
-    count := len(list[0].S)
+func DeriveInput(list []Input) Input {
+    count := list[0].Length()
     countItems := len(list)
-    for pos := 0; pos < count; pos++ {
+    var value uint = 0
+    for pos := count - 1; pos >= 0; pos-- {
         oneCount := 0
         for _, input := range list {
-            if input.S[pos] == '1' {
+            if input.CheckBit(pos) {
                 oneCount++
             }
         }
         if oneCount*2 >= countItems {
-            sb.WriteString("1")
-        } else {
-            sb.WriteString("0")
+            value |= 1 << pos
         }
     }
-
-    s := sb.String()
-    v, err := strconv.ParseInt(s, 2, 64)
-    if err != nil {
-        return Input{}, nil
-    }
-    return Input{s, uint(v)}, nil
+    return Input{count, value}
 }
 
-func applyNot(a uint) uint {
-    return ^a
-}
-
-func ReduceDerive(list []Input, derive func(queue []Input) (Input, error)) (Input, error) {
+func ReduceDerive(list []Input, derive func(queue []Input) Input) (Input, error) {
     queue := list
     bitIndex := 0
     for len(queue) > 1 {
-        i, err := derive(queue)
-        if err != nil {
-            return Input{}, err
-        }
+        i := derive(queue)
         newQueue := make([]Input, 0)
         for _, item := range queue {
-            if item.S[bitIndex] == i.S[bitIndex] {
+            if item.CheckBit(item.Length()-bitIndex) == i.CheckBit(i.Length()-bitIndex) {
                 newQueue = append(newQueue, item)
             }
         }
@@ -81,6 +87,10 @@ func ReduceDerive(list []Input, derive func(queue []Input) (Input, error)) (Inpu
     return queue[0], nil
 }
 
+func applyNot(a uint) uint {
+    return ^a
+}
+
 func init() {
     orchestration.MainDispatcher.AddSolver("Day03", orchestration.NewSolver(func(data string, result *orchestration.Result) error {
         lines := strings.Split(data, "\n")
@@ -89,39 +99,32 @@ func init() {
             if len(line) == 0 {
                 continue
             }
-            v, err := strconv.ParseInt(line, 2, 64)
+            lInput, err := NewInput(line)
             if err != nil {
                 return err
             }
-            list = append(list, Input{line, uint(v)})
+            list = append(list, lInput)
         }
 
         // A
-        a, err := DeriveInput(list)
-        if err != nil {
-            return err
-        }
+        a := DeriveInput(list)
         aInverse := a.Transform(applyNot)
-        result.AddResult(strconv.Itoa(int(a.Value * aInverse.Value)))
+        result.AddResult(strconv.Itoa(int(a.Value() * aInverse.Value())))
 
-        //B
-        bOxy, err := ReduceDerive(list, func(queue []Input) (Input, error) {
+        // B
+        bOxy, err := ReduceDerive(list, func(queue []Input) Input {
             return DeriveInput(queue)
         })
         if err != nil {
             return err
         }
-        bCo2, err := ReduceDerive(list, func(queue []Input) (Input, error) {
-            l, err := DeriveInput(queue)
-            if err != nil {
-                return l, err
-            }
-            return l.Transform(applyNot), nil
+        bCo2, err := ReduceDerive(list, func(queue []Input) Input {
+            return DeriveInput(queue).Transform(applyNot)
         })
         if err != nil {
             return err
         }
-        result.AddResult(strconv.Itoa(int(bOxy.Value * bCo2.Value)))
+        result.AddResult(strconv.Itoa(int(bOxy.Value() * bCo2.Value())))
         return nil
     }))
 }
