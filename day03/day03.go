@@ -35,17 +35,12 @@ func NewInput(value string) (Input, error) {
     }, nil
 }
 
-func (i *Input) setValue(v uint) {
+func (i Input) Transform(transformer func(base uint) uint) Input {
     var bitMap uint = 0
-    for u := 0; u < i.length-1; u++ {
+    for u := 0; u < i.length; u++ {
         bitMap |= 1 << u
     }
-    i.value = v & bitMap
-}
-
-func (i Input) Transform(transformer func(base uint) uint) Input {
-    value := transformer(i.value)
-    i.setValue(value)
+    i.value = transformer(i.value) & bitMap
     return i
 }
 
