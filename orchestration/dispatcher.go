@@ -33,6 +33,10 @@ func (d *Dispatcher) Process(results chan<- Result, workload WorkLoad) {
 
 func (d *Dispatcher) Start(workload WorkLoad) {
     limit := len(workload)
+    if limit == 0 {
+        fmt.Println("No Workload provided")
+        return
+    }
     resList := make([]Result, 0)
 
     results := make(chan Result)
