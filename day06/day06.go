@@ -1,4 +1,4 @@
-package day05
+package day06
 
 import (
     "github.com/jschaefer-io/aoc2021/orchestration"
