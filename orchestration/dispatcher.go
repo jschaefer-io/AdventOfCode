@@ -27,7 +27,7 @@ func (d *Dispatcher) Process(results chan<- Result, workload WorkLoad) {
         if !ok {
             panic(fmt.Sprintf("%s has no solver", key))
         }
-        go solver.handle(key, value, results)
+        go solver.Handle(key, value, results)
     }
 }
 

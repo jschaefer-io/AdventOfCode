@@ -6,7 +6,7 @@ type Solver struct {
     process func(string, *Result) error
 }
 
-func (s *Solver) handle(id string, payload string, results chan<- Result) {
+func (s *Solver) Handle(id string, payload string, results chan<- Result) {
     start := time.Now()
     result := Result{id, nil, 0, make([]string, 0)}
     result.Err = s.process(payload, &result)
