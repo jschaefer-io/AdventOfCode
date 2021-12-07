@@ -33,18 +33,25 @@ func SumListIncremental(list []int) int {
 
 func Solve(data string, result *orchestration.Result) error {
     crabs := make([]int, 0)
+    min := math.MaxInt64
+    max := 0
     for _, crab := range strings.Split(data, ",") {
         n, err := strconv.Atoi(strings.Trim(crab, " \n"))
         if err != nil {
             return err
         }
         crabs = append(crabs, n)
+        if n < min{
+            min = n
+        }
+        if n > max {
+            max = n
+        }
     }
 
-    crabCount := len(crabs)
-    minFuelA := SumList(ShiftToPosition(crabs, 0))
-    minFuelB := SumListIncremental(ShiftToPosition(crabs, 0))
-    for p := 1; p < crabCount; p++ {
+    minFuelA := SumList(ShiftToPosition(crabs, min))
+    minFuelB := SumListIncremental(ShiftToPosition(crabs, min))
+    for p := min + 1; p < max; p++ {
         shift := ShiftToPosition(crabs, p)
         sFuelA := SumList(shift)
         if sFuelA < minFuelA {
