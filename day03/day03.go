@@ -86,40 +86,42 @@ func applyNot(a uint) uint {
     return ^a
 }
 
+func Solve(data string, result *orchestration.Result) error {
+    lines := strings.Split(data, "\n")
+    list := make([]Input, 0)
+    for _, line := range lines {
+        if len(line) == 0 {
+            continue
+        }
+        lInput, err := NewInput(line)
+        if err != nil {
+            return err
+        }
+        list = append(list, lInput)
+    }
+
+    // A
+    a := DeriveInput(list)
+    aInverse := a.Transform(applyNot)
+    result.AddResult(strconv.Itoa(int(a.Value() * aInverse.Value())))
+
+    // B
+    bOxy, err := ReduceDerive(list, func(queue []Input) Input {
+        return DeriveInput(queue)
+    })
+    if err != nil {
+        return err
+    }
+    bCo2, err := ReduceDerive(list, func(queue []Input) Input {
+        return DeriveInput(queue).Transform(applyNot)
+    })
+    if err != nil {
+        return err
+    }
+    result.AddResult(strconv.Itoa(int(bOxy.Value() * bCo2.Value())))
+    return nil
+}
+
 func init() {
-    orchestration.MainDispatcher.AddSolver("Day03", orchestration.NewSolver(func(data string, result *orchestration.Result) error {
-        lines := strings.Split(data, "\n")
-        list := make([]Input, 0)
-        for _, line := range lines {
-            if len(line) == 0 {
-                continue
-            }
-            lInput, err := NewInput(line)
-            if err != nil {
-                return err
-            }
-            list = append(list, lInput)
-        }
-
-        // A
-        a := DeriveInput(list)
-        aInverse := a.Transform(applyNot)
-        result.AddResult(strconv.Itoa(int(a.Value() * aInverse.Value())))
-
-        // B
-        bOxy, err := ReduceDerive(list, func(queue []Input) Input {
-            return DeriveInput(queue)
-        })
-        if err != nil {
-            return err
-        }
-        bCo2, err := ReduceDerive(list, func(queue []Input) Input {
-            return DeriveInput(queue).Transform(applyNot)
-        })
-        if err != nil {
-            return err
-        }
-        result.AddResult(strconv.Itoa(int(bOxy.Value() * bCo2.Value())))
-        return nil
-    }))
+    orchestration.MainDispatcher.AddSolver("Day03", orchestration.NewSolver(Solve))
 }

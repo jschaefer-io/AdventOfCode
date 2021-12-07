@@ -16,14 +16,14 @@ type Submarine struct {
     Horizontal int
     Depth      int
     Aim        int
-    opHandler  func(op Operation, s *Submarine) error
+    opHandler  func(s *Submarine, op Operation) error
 }
 
-func (s *Submarine) Move(op Operation) error{
-    return s.opHandler(op, s)
+func (s *Submarine) Move(op Operation) error {
+    return s.opHandler(s, op)
 }
 
-func MoveA(op Operation, s *Submarine) error {
+func MoveA(s *Submarine, op Operation) error {
     switch op.Name {
     case "forward":
         s.Horizontal += op.Value
@@ -37,7 +37,7 @@ func MoveA(op Operation, s *Submarine) error {
     return nil
 }
 
-func MoveB(op Operation, s *Submarine) error {
+func MoveB(s *Submarine, op Operation) error {
     switch op.Name {
     case "forward":
         s.Horizontal += op.Value
@@ -52,34 +52,36 @@ func MoveB(op Operation, s *Submarine) error {
     return nil
 }
 
-func init() {
-    orchestration.MainDispatcher.AddSolver("Day02", orchestration.NewSolver(func(data string, result *orchestration.Result) error {
-        lines := strings.Split(data, "\n")
-        ops := make([]Operation, 0)
-        for _, line := range lines {
-            lData := strings.Split(line, " ")
-            if len(lData) != 2 {
-                continue
-            }
-            value, _ := strconv.Atoi(lData[1])
-            ops = append(ops, Operation{lData[0], value})
+func Solve(data string, result *orchestration.Result) error {
+    lines := strings.Split(data, "\n")
+    ops := make([]Operation, 0)
+    for _, line := range lines {
+        lData := strings.Split(line, " ")
+        if len(lData) != 2 {
+            continue
         }
+        value, _ := strconv.Atoi(lData[1])
+        ops = append(ops, Operation{lData[0], value})
+    }
 
-        subs := make([]*Submarine, 0)
-        subs = append(subs, &Submarine{opHandler: MoveA})
-        subs = append(subs, &Submarine{opHandler: MoveB})
-        for _, op := range ops {
-            for _, sub := range subs {
-                err := sub.Move(op)
-                if err != nil {
-                    return err
-                }
-            }
-        }
-
+    subs := make([]*Submarine, 0)
+    subs = append(subs, &Submarine{opHandler: MoveA})
+    subs = append(subs, &Submarine{opHandler: MoveB})
+    for _, op := range ops {
         for _, sub := range subs {
-            result.AddResult(strconv.Itoa(sub.Depth * sub.Horizontal))
+            err := sub.Move(op)
+            if err != nil {
+                return err
+            }
         }
-        return nil
-    }))
+    }
+
+    for _, sub := range subs {
+        result.AddResult(strconv.Itoa(sub.Depth * sub.Horizontal))
+    }
+    return nil
+}
+
+func init() {
+    orchestration.MainDispatcher.AddSolver("Day02", orchestration.NewSolver(Solve))
 }
