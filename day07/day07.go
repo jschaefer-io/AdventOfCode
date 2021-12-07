@@ -3,14 +3,34 @@ package day07
 import (
     "github.com/jschaefer-io/aoc2021/orchestration"
     "math"
+    "sort"
     "strconv"
     "strings"
 )
 
+func Average(list []int) (int, int) {
+    sum := 0
+    for _, n := range list {
+        sum += n
+    }
+    avg := float64(sum) / float64(len(list))
+    return int(math.Floor(avg)), int(math.Ceil(avg))
+}
+
+func Median(list []int) int {
+    count := len(list)
+    sortedList := make([]int, count)
+    for i, _ := range list {
+        sortedList[i] = list[i]
+    }
+    sort.Ints(sortedList)
+    return sortedList[int(math.Floor(float64(count-1)/2))]
+}
+
 func ShiftToPosition(list []int, target int) []int {
-    offsets := make([]int, 0)
-    for _, c := range list {
-        offsets = append(offsets, int(math.Abs(float64(target-c))))
+    offsets := make([]int, len(list))
+    for i, c := range list {
+        offsets[i] = int(math.Abs(float64(target - c)))
     }
     return offsets
 }
@@ -41,7 +61,7 @@ func Solve(data string, result *orchestration.Result) error {
             return err
         }
         crabs = append(crabs, n)
-        if n < min{
+        if n < min {
             min = n
         }
         if n > max {
@@ -49,22 +69,10 @@ func Solve(data string, result *orchestration.Result) error {
         }
     }
 
-    minFuelA := SumList(ShiftToPosition(crabs, min))
-    minFuelB := SumListIncremental(ShiftToPosition(crabs, min))
-    for p := min + 1; p < max; p++ {
-        shift := ShiftToPosition(crabs, p)
-        sFuelA := SumList(shift)
-        if sFuelA < minFuelA {
-            minFuelA = sFuelA
-        }
-
-        sFuelB := SumListIncremental(shift)
-        if sFuelB < minFuelB {
-            minFuelB = sFuelB
-        }
-    }
-    result.AddResult(strconv.Itoa(minFuelA))
-    result.AddResult(strconv.Itoa(minFuelB))
+    result.AddResult(strconv.Itoa(SumList(ShiftToPosition(crabs, Median(crabs)))))
+    fAvg, cAvg := Average(crabs)
+    b := math.Min(float64(SumListIncremental(ShiftToPosition(crabs, fAvg))), float64(SumListIncremental(ShiftToPosition(crabs, cAvg))))
+    result.AddResult(strconv.Itoa(int(b)))
     return nil
 }
 
