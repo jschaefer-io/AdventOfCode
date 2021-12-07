@@ -23,12 +23,10 @@ func SumList(list []int) int {
     return sum
 }
 
-func SumListIncremental(list []int)int{
+func SumListIncremental(list []int) int {
     sum := 0
     for _, n := range list {
-        for i := 0; i < n; i++{
-            sum += n-i
-        }
+        sum += (n * (n + 1)) / 2
     }
     return sum
 }
@@ -48,16 +46,16 @@ func init() {
         minFuelA := SumList(ShiftToPosition(crabs, 0))
         minFuelB := SumListIncremental(ShiftToPosition(crabs, 0))
         for p := 1; p < crabCount; p++ {
-           shift := ShiftToPosition(crabs, p)
-           sFuelA := SumList(shift)
-           if sFuelA < minFuelA {
-               minFuelA = sFuelA
-           }
+            shift := ShiftToPosition(crabs, p)
+            sFuelA := SumList(shift)
+            if sFuelA < minFuelA {
+                minFuelA = sFuelA
+            }
 
-           sFuelB := SumListIncremental(shift)
-           if sFuelB < minFuelB {
-               minFuelB = sFuelB
-           }
+            sFuelB := SumListIncremental(shift)
+            if sFuelB < minFuelB {
+                minFuelB = sFuelB
+            }
         }
         result.AddResult(strconv.Itoa(minFuelA))
         result.AddResult(strconv.Itoa(minFuelB))
