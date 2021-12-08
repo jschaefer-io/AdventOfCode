@@ -23,32 +23,50 @@ func (set WiringSet) ResolveWiring() map[string]int {
         }
     }
 
-    // Find 3
-    i3 := find3(letters[1].Segments(), leftover)
-    letters[3] = leftover[i3]
-    leftover = append(leftover[:i3], leftover[i3+1:]...)
+    // Find 3 by looking for a 5 length wiring using both 1 segments
+    oneLetters := letters[1].Segments()
+    lengthFilter(3, 5, letters, &leftover, func(w Wiring) bool {
+        _, fok := w.Letters[oneLetters[0]]
+        _, sok := w.Letters[oneLetters[1]]
+        return fok && sok
+    })
 
-    // Find 6
-    i6 := find6(letters[1].Segments(), leftover)
-    letters[6] = leftover[i6]
-    leftover = append(leftover[:i6], leftover[i6+1:]...)
+    // Find 6 by looking for a 6 length wiring having exactly one off the 1 segments
+    lengthFilter(6, 6, letters, &leftover, func(w Wiring) bool {
+        _, fok := w.Letters[oneLetters[0]]
+        _, sok := w.Letters[oneLetters[1]]
+        return !fok && sok || fok && !sok
+    })
 
-    // Find 9
-    i9 := find9(letters[3], letters[4], leftover)
-    letters[9] = leftover[i9]
-    leftover = append(leftover[:i9], leftover[i9+1:]...)
+    // Find 9 by looking for a 6 length wiring which contain all segments from 3 and 4
+    threeFourLetters := append(letters[3].Segments(), letters[4].Segments()...)
+    lengthFilter(9, 6, letters, &leftover, func(w Wiring) bool {
+        match := true
+        for _, l := range threeFourLetters {
+            if _, ok := w.Letters[l]; !ok {
+                match = false
+                break
+            }
+        }
+        return match
+    })
 
-    // Find 0
-    i0 := find0(leftover)
-    letters[0] = leftover[i0]
-    leftover = append(leftover[:i0], leftover[i0+1:]...)
+    // 0 is the only wiring left with the length of 6
+    lengthFilter(0, 6, letters, &leftover, func(w Wiring) bool {
+        return true
+    })
 
-    i2 := find2(letters[6], letters[8], leftover)
-    letters[2] = leftover[i2]
-    leftover = append(leftover[:i2], leftover[i2+1:]...)
+    // Find 2 by looking for a wiring left, which contain the segment by removing all 6 segments form 8
+    diffLetter := diffLettersRight(letters[8], letters[6])[0]
+    lengthFilter(2, -1, letters, &leftover, func(w Wiring) bool {
+        _, ok := w.Letters[diffLetter]
+        return ok
+    })
 
+    // The only letter left at this point will be 5
     letters[5] = leftover[0]
 
+    // Prepare wiring resolver
     reducer := make(map[string]int)
     for k, v := range letters {
         reducer[SortChars(v.String())] = k
@@ -56,75 +74,28 @@ func (set WiringSet) ResolveWiring() map[string]int {
     return reducer
 }
 
-func find3(contains []rune, list []Wiring) int {
-    for s, w := range list {
-        if w.Count != 5 {
+func lengthFilter(target int, length int, letters map[int]Wiring, leftover *[]Wiring, find func(w Wiring) bool) {
+    for s, w := range *leftover {
+        if length > 0 && w.Count != length {
             continue
         }
-        _, fok := w.Letters[contains[0]]
-        _, sok := w.Letters[contains[1]]
-        if fok && sok {
-            return s
+        if find(w) {
+            l := *leftover
+            newLeftover := append(l[:s], l[s+1:]...)
+            *leftover = newLeftover
+            letters[target] = w
+            return
         }
     }
-    return -1
+    panic("unable to apply filter function")
 }
 
-func find6(contains []rune, list []Wiring) int {
-    for s, w := range list {
-        if w.Count != 6 {
-            continue
-        }
-        _, fok := w.Letters[contains[0]]
-        _, sok := w.Letters[contains[1]]
-        if !fok && sok || fok && !sok {
-            return s
+func diffLettersRight(a, b Wiring) []rune {
+    diff := make([]rune, 0)
+    for lA := range a.Letters {
+        if _, ok := b.Letters[lA]; !ok {
+            diff = append(diff, lA)
         }
     }
-    return -1
-}
-
-func find9(letters3, letters4 Wiring, list []Wiring) int {
-    letters := append(letters3.Segments(), letters4.Segments()...)
-    for s, w := range list {
-        if w.Count != 6 {
-            continue
-        }
-        match := true
-        for _, l := range letters {
-            if _, ok := w.Letters[l]; !ok {
-                match = false
-                break
-            }
-        }
-        if match {
-            return s
-        }
-    }
-    return -1
-}
-
-func find0(list []Wiring) int {
-    for s, w := range list {
-        if w.Count == 6 {
-            return s
-        }
-    }
-    return -1
-}
-
-func find2(letters6, letters8 Wiring, list []Wiring) int {
-    var search rune
-    for k := range letters8.Letters {
-        if _, ok := letters6.Letters[k]; !ok {
-            search = k
-            break
-        }
-    }
-    for s, w := range list {
-        if _, ok := w.Letters[search]; ok {
-            return s
-        }
-    }
-    return -1
+    return diff
 }
