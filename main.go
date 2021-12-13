@@ -13,6 +13,7 @@ import (
     _ "github.com/jschaefer-io/aoc2021/day10"
     _ "github.com/jschaefer-io/aoc2021/day11"
     _ "github.com/jschaefer-io/aoc2021/day12"
+    _ "github.com/jschaefer-io/aoc2021/day13"
     "github.com/jschaefer-io/aoc2021/orchestration"
     "os"
     "strings"
