@@ -1,7 +1,6 @@
 package day14
 
 import (
-    "math"
     "strings"
 )
 
@@ -50,5 +49,5 @@ func (p PairCounter) Score(first, last rune) int {
     }
     counter[first]++
     counter[last]++
-    return int(math.Ceil(float64(counter[max])/2) - math.Ceil(float64(counter[min])/2))
+    return counter[max]/2 - counter[min]/2
 }
