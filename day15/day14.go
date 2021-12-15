@@ -3,6 +3,7 @@ package day15
 import (
     "github.com/jschaefer-io/aoc2021/orchestration"
     "math"
+    "sort"
     "strconv"
     "strings"
 )
@@ -70,7 +71,7 @@ func (f *Field) distanceList() map[Position]int {
     list := make(map[Position]int, length)
     positions, _ := f.Positions()
     for _, v := range positions {
-        list[v] = math.MaxInt64
+        list[v] = math.MaxInt32
     }
     return list
 }
@@ -118,17 +119,27 @@ func (f *Field) ShortestPaths(start Position) PathMap {
     predecessor := make(PathMap)
     distances[start] = 0
 
-    for len(leftover) > 0 {
-        current := getMinIndex(distances, leftover)
+    queue := PrioQueue{
+        lookup: make(map[Position]struct{}),
+        list:   make([]Position, 0),
+        values: make(map[Position]int),
+    }
+    for p, _ := range leftover {
+        queue.Add(p, distances[p])
+    }
+    queue.Sort()
+    for queue.Count() > 0 {
+
+        current := queue.Pop()
         delete(leftover, current)
         for _, neighbor := range f.neighbors(current) {
             if _, ok := leftover[neighbor]; !ok {
                 continue
             }
-
             newDistance := distances[current] + neighbor.Risk
             if newDistance < distances[neighbor] {
                 distances[neighbor] = newDistance
+                queue.Update(neighbor, newDistance)
                 predecessor[neighbor] = current
             }
         }
@@ -136,11 +147,19 @@ func (f *Field) ShortestPaths(start Position) PathMap {
     return predecessor
 }
 
-func (f Field) String() string {
+func (f Field) String(list []Position) string {
+    pMap := make(map[Position]struct{})
+    for _, v := range list {
+        pMap[v] = struct{}{}
+    }
     var sb strings.Builder
     for y := 0; y < f.Height; y++ {
         for x := 0; x < f.Width; x++ {
-            sb.WriteString(strconv.Itoa(f.Position[y][x].Risk))
+            if _, ok := pMap[f.Position[y][x]]; ok {
+                sb.WriteString(".")
+            } else {
+                sb.WriteString(strconv.Itoa(f.Position[y][x].Risk))
+            }
         }
         sb.WriteString("\n")
     }
@@ -150,11 +169,98 @@ func (f Field) String() string {
 func SolveForField(field Field, to, from Position) int {
     paths := field.ShortestPaths(from)
 
+    //fmt.Println(field.String(paths.GetPath(to)))
+
     sum := 0
     for _, v := range paths.GetPath(to) {
         sum += v.Risk
     }
     return sum
+}
+
+type PrioQueue struct {
+    count  int
+    lookup map[Position]struct{}
+    list   []Position
+    values map[Position]int
+}
+
+func (q *PrioQueue) Count() int {
+    return q.count
+}
+
+func (q *PrioQueue) Pop() Position {
+    v := q.list[0]
+    delete(q.lookup, v)
+    delete(q.values, v)
+    q.list = q.list[1:]
+    q.count--
+    return v
+}
+
+func (q *PrioQueue) Sort() {
+    sort.Slice(q.list, func(i, j int) bool {
+        return q.values[q.list[i]] < q.values[q.list[j]]
+    })
+}
+
+func (q *PrioQueue) Update(pos Position, value int) {
+    var index int
+    for i, v := range q.list {
+        if v == pos {
+            index = i
+            break
+        }
+    }
+    var target int
+    found := false
+    newList := make([]Position, 0)
+    if value == q.values[pos] {
+        newList = q.list
+    } else if value < q.values[pos] {
+        for i := 0; i < index; i++ {
+            target = i
+            if q.values[q.list[i]] >= value {
+                found = true
+                break
+            }
+        }
+        if found {
+            newList = append(newList, q.list[:target]...)
+            newList = append(newList, pos)
+            newList = append(newList, q.list[target])
+            newList = append(newList, q.list[target+1:index]...)
+            newList = append(newList, q.list[index+1:]...)
+        } else {
+            newList = q.list
+        }
+    } else {
+        for i := q.count - 1; i > index; i-- {
+            target = i
+            if q.values[q.list[i]] <= value {
+                found = true
+                break
+            }
+        }
+        if found {
+            newList = append(newList, q.list[:index]...)
+            newList = append(newList, q.list[target])
+            newList = append(newList, pos)
+            newList = append(newList, q.list[index+1:target]...)
+            newList = append(newList, q.list[target+1:]...)
+        } else {
+            newList = q.list
+        }
+    }
+    q.list = newList
+    q.values[pos] = value
+}
+
+func (q *PrioQueue) Add(pos Position, value int) {
+    q.list = append(q.list, pos)
+    q.values[pos] = value
+    q.lookup[pos] = struct{}{}
+    q.count++
 }
 
 func Solve(data string, result *orchestration.Result) error {
@@ -181,9 +287,9 @@ func Solve(data string, result *orchestration.Result) error {
     a := SolveForField(field, field.Position[0][0], field.Position[field.Height-1][field.Width-1])
     result.AddResult(strconv.Itoa(a))
 
-    largeField := field.Expand(5)
-    b := SolveForField(largeField, largeField.Position[0][0], largeField.Position[largeField.Height-1][largeField.Width-1])
-    result.AddResult(strconv.Itoa(b))
+    //largeField := field.Expand(5)
+    //b := SolveForField(largeField, largeField.Position[0][0], largeField.Position[largeField.Height-1][largeField.Width-1])
+    //result.AddResult(strconv.Itoa(b))
 
     return nil
 }
