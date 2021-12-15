@@ -4,6 +4,8 @@ import (
     "strings"
 )
 
+type PairCounter map[string]int
+
 func NewPairCounter(str string) PairCounter {
     c := make(PairCounter)
     lStr := len(str)

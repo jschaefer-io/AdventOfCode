@@ -6,8 +6,6 @@ import (
     "strings"
 )
 
-type PairCounter map[string]int
-
 func Solve(data string, result *orchestration.Result) error {
     mappings := make(map[string]string)
     groups := strings.Split(data, "\n\n")
