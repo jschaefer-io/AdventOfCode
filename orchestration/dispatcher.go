@@ -69,7 +69,7 @@ func (d *Dispatcher) Start(workload WorkLoad) {
     fmt.Println("\nSolutions:")
     for _, res := range resList {
         var sb strings.Builder
-        sb.WriteString(fmt.Sprintf("Day %s (%s):", res.Id, res.Duration))
+        sb.WriteString(fmt.Sprintf("%s (%s):", res.Id, res.Duration))
         if res.Err != nil {
             sb.WriteString(fmt.Sprintf("\nError: %s", res.Err))
         } else {
