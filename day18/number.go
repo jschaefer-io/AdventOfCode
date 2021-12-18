@@ -15,8 +15,8 @@ func (n Number) String() string {
 
 func (n *Number) add(f Formula) Formula {
     return &Compound{
-        left:  n,
-        right: f,
+        left:  n.Copy(),
+        right: f.Copy(),
     }
 }
 
@@ -37,4 +37,8 @@ func (n *Number) split() (bool, Formula) {
 
 func (n *Number) Magnitude() int{
     return n.value
+}
+
+func (n *Number) Copy() Formula{
+    return &Number{n.value}
 }

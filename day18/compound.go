@@ -13,8 +13,8 @@ func (c Compound) String() string {
 
 func (c *Compound) add(f Formula) Formula {
     return &Compound{
-        left:  c,
-        right: f,
+        left:  c.Copy(),
+        right: f.Copy(),
     }
 }
 
@@ -76,4 +76,11 @@ func (c *Compound) split() (bool, Formula) {
 
 func (c *Compound) Magnitude() int {
     return 3*c.left.Magnitude() + 2*c.right.Magnitude()
+}
+
+func (c *Compound) Copy() Formula {
+    return &Compound{
+        c.left.Copy(),
+        c.right.Copy(),
+    }
 }

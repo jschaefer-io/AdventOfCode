@@ -13,6 +13,7 @@ type Formula interface {
     explode(depth int, parents ExplodeTrace) bool
     add(f Formula) Formula
     Magnitude() int
+    Copy() Formula
 }
 
 func ParseNumber(str string) Formula {
@@ -57,18 +58,18 @@ func ExecuteAddition(a, b Formula) Formula {
 }
 
 func Solve(data string, result *orchestration.Result) error {
-    numbers := make([]string, 0)
+    numbers := make([]Formula, 0)
     for _, line := range strings.Split(data, "\n") {
         if len(line) == 0 {
             continue
         }
-        numbers = append(numbers, line)
+        numbers = append(numbers, ParseNumber(line))
     }
 
     // A
-    res := ParseNumber(numbers[0])
+    res := numbers[0]
     for i := 1; i < len(numbers); i++ {
-        res = ExecuteAddition(res, ParseNumber(numbers[i]))
+        res = ExecuteAddition(res, numbers[i])
     }
     result.AddResult(strconv.Itoa(res.Magnitude()))
 
@@ -79,7 +80,7 @@ func Solve(data string, result *orchestration.Result) error {
             if iA == iB {
                 continue
             }
-            res = ExecuteAddition(ParseNumber(a), ParseNumber(b))
+            res = ExecuteAddition(a, b)
             mag := res.Magnitude()
             if max == -1 || mag > max {
                 max = mag
