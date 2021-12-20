@@ -2,7 +2,6 @@ package day19
 
 import (
     "errors"
-    "fmt"
     "github.com/jschaefer-io/aoc2021/orchestration"
     "math"
     "strconv"
@@ -136,7 +135,6 @@ func Solve(data string, result *orchestration.Result) error {
                 break
             }
         }
-        fmt.Println(len(list))
     }
 
     // a
@@ -158,7 +156,6 @@ func Solve(data string, result *orchestration.Result) error {
     return nil
 }
 
-func
-init() {
+func init() {
     orchestration.MainDispatcher.AddSolver("Day19", orchestration.NewSolver(Solve))
 }
