@@ -7,9 +7,9 @@ import (
     "strings"
 )
 
-func findWinner(game Game, winners map[string]Game, counts map[string][2]int) (int, int) {
+func findWinner(game Game, lastWinner *Game, counts map[string][2]int) (int, int) {
     if game.End {
-        winners[game.String()] = game
+        *lastWinner = game
         if game.A.Score >= game.Condition {
             return 1, 0
         } else {
@@ -23,7 +23,7 @@ func findWinner(game Game, winners map[string]Game, counts map[string][2]int) (i
             aWin += res[0]
             bWin += res[1]
         } else {
-            a, b := findWinner(g, winners, counts)
+            a, b := findWinner(g, lastWinner, counts)
             aWin += a
             bWin += b
         }
@@ -32,8 +32,8 @@ func findWinner(game Game, winners map[string]Game, counts map[string][2]int) (i
     return aWin, bWin
 }
 
-func PlayGame(a, b int, limit int, dice Dice) (map[string]Game, int, int) {
-    winners := make(map[string]Game)
+func PlayGame(a, b int, limit int, dice Dice) (Game, int, int) {
+    lastWinner := &Game{}
     winnerCount := make(map[string][2]int)
     game := Game{
         A:         Pawn{Position: a},
@@ -41,8 +41,8 @@ func PlayGame(a, b int, limit int, dice Dice) (map[string]Game, int, int) {
         Dice:      dice,
         Condition: limit,
     }
-    aWin, bWin := findWinner(game, winners, winnerCount)
-    return winners, aWin, bWin
+    aWin, bWin := findWinner(game, lastWinner, winnerCount)
+    return *lastWinner, aWin, bWin
 }
 
 func Solve(data string, result *orchestration.Result) error {
@@ -60,11 +60,9 @@ func Solve(data string, result *orchestration.Result) error {
     }
 
     // a
-    winners, _, _ := PlayGame(startingPositions[0], startingPositions[1], 1000, &DeterministicDice{})
-    for _, winner := range winners {
-        a := winner.Dice.Count() * int(math.Min(float64(winner.A.Score), float64(winner.B.Score)))
-        result.AddResult(strconv.Itoa(a))
-    }
+    winner, _, _ := PlayGame(startingPositions[0], startingPositions[1], 1000, &DeterministicDice{})
+    a := winner.Dice.Count() * int(math.Min(float64(winner.A.Score), float64(winner.B.Score)))
+    result.AddResult(strconv.Itoa(a))
 
     // b
     _, aPawn, bPawn := PlayGame(startingPositions[0], startingPositions[1], 21, &DiracDice{})
