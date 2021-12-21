@@ -1,6 +1,7 @@
 package orchestration
 
 import (
+    "errors"
     "fmt"
     "sort"
     "strings"
@@ -25,7 +26,13 @@ func (d *Dispatcher) Process(results chan<- Result, workload WorkLoad) {
         all.Add(1)
         solver, ok := d.solvers[key]
         if !ok {
-            panic(fmt.Sprintf("%s has no solver", key))
+            go func() {
+                results <- Result{
+                    Id:  key,
+                    Err: errors.New(fmt.Sprintf("%s has no solver", key)),
+                }
+            }()
+            continue
         }
         go solver.Handle(key, value, results)
     }
