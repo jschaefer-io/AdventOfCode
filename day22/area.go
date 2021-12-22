@@ -32,6 +32,9 @@ func (b Area) intersectRange(a1, a2, b1, b2 int) (bool, int, int) {
 }
 
 func (b Area) Intersect(a Area) (bool, Area) {
+    if b.X2 < a.X1 || b.Y2 < a.Y1 || b.Z2 < a.Z1 || b.X1 > a.X2 || b.Y1 > a.Y2 || b.Z1 > a.Z2 {
+        return false, Area{}
+    }
     x, x1, x2 := b.intersectRange(b.X1, b.X2, a.X1, a.X2)
     y, y1, y2 := b.intersectRange(b.Y1, b.Y2, a.Y1, a.Y2)
     z, z1, z2 := b.intersectRange(b.Z1, b.Z2, a.Z1, a.Z2)
