@@ -1,6 +1,7 @@
 package day22
 
 import (
+    "fmt"
     "github.com/jschaefer-io/aoc2021/orchestration"
     "regexp"
     "strconv"
@@ -16,44 +17,39 @@ type Coordinate struct {
 }
 
 type Grid struct {
-    field map[Coordinate]Cube
+    list []Boundary
 }
 
-func (g *Grid) Set(value bool, pos Coordinate) {
-    g.field[pos] = Cube(value)
-}
-
-func (g *Grid) Get(pos Coordinate) Cube {
-    return g.field[pos]
-}
-
-func (g *Grid) ApplyOperation(op Operation, boundary *Boundary) {
-    for x := op.X1; x <= op.X2; x++ {
-        if boundary != nil && (x < boundary.X1 || x > boundary.X2) {
-            continue
-        }
-        for y := op.Y1; y <= op.Y2; y++ {
-            if boundary != nil && (y < boundary.Y1 || y > boundary.Y2) {
-                continue
-            }
-            for z := op.Z1; z <= op.Z2; z++ {
-                if boundary != nil && (z < boundary.Z1 || z > boundary.Z2) {
-                    continue
-                }
-                g.Set(op.Switch, Coordinate{x, y, z})
-            }
+func (g *Grid) ApplyOperation(op Operation) {
+    newList := make([]Boundary, 0)
+    for _, box := range g.list {
+        intersect, intersectBox := op.Boundary.Intersect(box)
+        if !intersect {
+            newList = append(newList, box)
+        } else {
+            newList = append(newList, box.Sub(intersectBox)...)
         }
     }
+    if op.Switch {
+        newList = append(newList, op.Boundary)
+    }
+    g.list = newList
 }
 
-func (g *Grid) CountActive() int {
-    active := 0
-    for _, s := range g.field {
-        if s {
-            active++
+func (g *Grid) CountActive(constraint *Boundary) int {
+    sum := 0
+    if constraint != nil {
+        for _, box := range g.list {
+            if ok, cBox := constraint.Intersect(box); ok {
+                sum += cBox.Score()
+            }
+        }
+    } else {
+        for _, box := range g.list {
+            sum += box.Score()
         }
     }
-    return active
+    return sum
 }
 
 type Boundary struct {
@@ -63,6 +59,58 @@ type Boundary struct {
     Y2 int
     Z1 int
     Z2 int
+}
+
+func (b *Boundary) Score() int {
+    return (b.X2 - b.X1 + 1) * (b.Y2 - b.Y1 + 1) * (b.Z2 - b.Z1 + 1)
+}
+
+func (b Boundary) intersectRange(a1, a2, b1, b2 int) (bool, int, int) {
+    found := false
+    var intersect1 int
+    var intersect2 int
+    for x := a1; x <= a2; x++ {
+        if x >= b1 && x <= b2 {
+            if !found {
+                found = true
+                intersect1 = x
+                intersect2 = x
+            } else {
+                intersect2 = x
+            }
+        }
+    }
+    return found, intersect1, intersect2
+}
+
+func (b Boundary) Intersect(a Boundary) (bool, Boundary) {
+    x, x1, x2 := b.intersectRange(b.X1, b.X2, a.X1, a.X2)
+    y, y1, y2 := b.intersectRange(b.Y1, b.Y2, a.Y1, a.Y2)
+    z, z1, z2 := b.intersectRange(b.Z1, b.Z2, a.Z1, a.Z2)
+    return x && y && z, Boundary{x1, x2, y1, y2, z1, z2}
+}
+
+func (b Boundary) Valid() bool {
+    return b.X1 <= b.X2 && b.Y1 <= b.Y2 && b.Z1 <= b.Z2
+}
+
+func (b Boundary) Sub(a Boundary) []Boundary {
+    list := make([]Boundary, 0)
+    partials := []Boundary{
+        {b.X1, b.X2, b.Y1, a.Y1 - 1, a.Z1, a.Z2},
+        {b.X1, b.X2, a.Y2 + 1, b.Y2, a.Z1, a.Z2},
+        {b.X1, a.X1 - 1, a.Y1, a.Y2, a.Z1, a.Z2},
+        {a.X2 + 1, b.X2, a.Y1, a.Y2, a.Z1, a.Z2},
+        {b.X1, b.X2, b.Y1, b.Y2, b.Z1, a.Z1 - 1},
+        {b.X1, b.X2, b.Y1, b.Y2, a.Z2 + 1, b.Z2},
+    }
+    for _, partial := range partials {
+        if partial.Valid() {
+            list = append(list, partial)
+        }
+    }
+
+    return list
 }
 
 type Operation struct {
@@ -106,14 +154,16 @@ func Solve(data string, result *orchestration.Result) error {
         operations = append(operations, Operation{group[0] == "on", Boundary{x1, x2, y1, y2, z1, z2}})
     }
 
-    // a
-    g := Grid{field: make(map[Coordinate]Cube)}
-    aBound := Boundary{-50, 50, -50, 50, -50, 50}
-    for _, operation := range operations {
-        g.ApplyOperation(operation, &aBound)
+    g := Grid{list: make([]Boundary, 0)}
+    for i, operation := range operations {
+        g.ApplyOperation(operation)
     }
-    result.AddResult(strconv.Itoa(g.CountActive()))
 
+    // a
+    result.AddResult(strconv.Itoa(g.CountActive(&Boundary{-50, 50, -50, 50, -50, 50})))
+
+    // b
+    result.AddResult(strconv.Itoa(g.CountActive(nil)))
     return nil
 }
 
