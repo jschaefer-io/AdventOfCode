@@ -4,6 +4,7 @@ import (
     "fmt"
     "github.com/jschaefer-io/aoc2021/orchestration"
     "math"
+    "strconv"
     "strings"
 )
 
@@ -135,7 +136,7 @@ func (m *Map) Copy() Map {
         Depth:     m.Depth,
         Score:     m.Score,
         cache:     m.cache,
-        //progress:  append(m.progress, m.String()),
+        progress:  append(m.progress, m.String()),
     }
 
     for p, t := range m.Tiles {
@@ -261,8 +262,12 @@ func (amp *Amphipod) ValidatePath(current Position, p Path, m *Map) bool {
     destination := p[len(p)-1]
     destinationTile := m.Tiles[destination]
     currentTile := m.Tiles[current]
-    // Cant end on forbidden spaces
+
     if _, ok := m.Forbidden[destination]; ok {
+        return false
+    }
+
+    if _, ok := m.Amphipods[destination]; ok {
         return false
     }
 
@@ -280,7 +285,7 @@ func (amp *Amphipod) ValidatePath(current Position, p Path, m *Map) bool {
         }
 
         done := true
-        for y := current.Y + 1; y <= m.Depth; y++ {
+        for y := current.Y; y <= m.Depth; y++ {
             nPos := Position{current.X, y}
             nAmp, _ := m.Amphipods[nPos]
             if nAmp.Destination != amp.Destination {
@@ -319,75 +324,75 @@ type Tile struct {
     Room rune
 }
 
-func Solve(data string, result *orchestration.Result) error {
-    m := NewMap(11, 2)
+func FromString(str string) Map {
+    depth := 2
+    if len(str) == 90 {
+        depth = 4
+    }
+    m := NewMap(11, depth)
+    for y, line := range strings.Split(str, "\n") {
+        for x, c := range strings.Split(line, "") {
+            switch c[0] {
+            case '#':
+            case '.':
+            case ' ':
+                continue
+            default:
+                m.AddAmphipod(Position{x - 1, y - 1}, Amphipod{rune(c[0])})
+            }
+        }
+    }
+    return m
+}
 
-    //fmt.Println(m.Neighbors(Position{2, 0}))
-    m.AddAmphipod(Position{2, 1}, Amphipod{'C'})
-    m.AddAmphipod(Position{2, 2}, Amphipod{'B'})
-
-    m.AddAmphipod(Position{4, 1}, Amphipod{'A'})
-    m.AddAmphipod(Position{4, 2}, Amphipod{'A'})
-    //
-    m.AddAmphipod(Position{6, 1}, Amphipod{'D'})
-    m.AddAmphipod(Position{6, 2}, Amphipod{'B'})
-
-    m.AddAmphipod(Position{8, 1}, Amphipod{'D'})
-    m.AddAmphipod(Position{8, 2}, Amphipod{'C'})
-
-    //fmt.Println(m)
-    //
-    //for _, n := range m.Step() {
-    //    fmt.Println(n)
-    //}
-    //
-    //return nil
-
-    //fmt.Println(m)
-    //fmt.Println(t)
-
-    mem := make(map[string]struct{})
-    mem[m.String()] = struct{}{}
+func FindMin(m Map) int {
+    mem := make(map[string]int)
+    mem[m.String()] = 0
     var winner *Map = nil
     activeMaps := []Map{m}
     iterations := 0
     for len(activeMaps) > 0 {
-        fmt.Println(iterations)
+        fmt.Println(iterations, len(activeMaps))
         newList := make([]Map, 0)
         for _, current := range activeMaps {
             for _, nMap := range current.Step() {
                 checksum := nMap.String()
-                if _, ok := mem[checksum]; ok {
-                    continue
+                if v, ok := mem[checksum]; ok {
+                    if nMap.Score >= v {
+                        continue
+                    }
                 }
                 if winner != nil && winner.Score < nMap.Score {
                     continue
                 }
 
                 if nMap.Finished() {
-                    c := nMap.Copy()
+                    c := nMap
                     winner = &c
                     fmt.Println("SCORE:", nMap.Score)
                 } else {
                     newList = append(newList, nMap)
-                    mem[checksum] = struct{}{}
+                    mem[checksum] = nMap.Score
                 }
             }
         }
         activeMaps = newList
         iterations++
     }
+    return winner.Score
+}
 
-    //for _, p := range winner.progress {
-    //    fmt.Println(p)
-    //}
-    fmt.Println(winner.Score)
+func Solve(data string, result *orchestration.Result) error {
+    a := FindMin(FromString(data))
+    result.AddResult(strconv.Itoa(a))
 
-    //for pos, amp := range m.Amphipods {
-    //    fmt.Println(amp.GetPaths(pos, m))
-    //    break
-    //}
-    //fmt.Println(activeMaps)
+    bInput := make([]string, 0)
+    lineRaw := strings.Split(data, "\n")
+    bInput = append(bInput, lineRaw[:3]...)
+    bInput = append(bInput, []string{"  #D#C#B#A#", "  #D#B#A#C#"}...)
+    bInput = append(bInput, lineRaw[3:]...)
+    b := FindMin(FromString(strings.Join(bInput, "\n")))
+    result.AddResult(strconv.Itoa(b))
 
     return nil
 }
