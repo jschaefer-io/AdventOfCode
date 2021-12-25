@@ -25,6 +25,7 @@ import (
     _ "github.com/jschaefer-io/aoc2021/day22"
     _ "github.com/jschaefer-io/aoc2021/day23"
     _ "github.com/jschaefer-io/aoc2021/day24"
+    _ "github.com/jschaefer-io/aoc2021/day25"
     "github.com/jschaefer-io/aoc2021/orchestration"
     "os"
     "strings"
