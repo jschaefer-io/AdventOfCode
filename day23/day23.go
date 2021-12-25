@@ -1,7 +1,6 @@
 package day23
 
 import (
-    "fmt"
     "github.com/jschaefer-io/aoc2021/orchestration"
     "strconv"
     "strings"
@@ -44,7 +43,6 @@ func FindMin(m Map) int {
     activeMaps := []Map{m}
     iterations := 0
     for len(activeMaps) > 0 {
-        fmt.Println(iterations, len(activeMaps))
         newList := make([]Map, 0)
         for _, current := range activeMaps {
             for _, nMap := range current.Step() {
@@ -61,7 +59,6 @@ func FindMin(m Map) int {
                 if nMap.Finished() {
                     c := nMap
                     winner = &c
-                    fmt.Println("SCORE:", nMap.Score)
                 } else {
                     newList = append(newList, nMap)
                     mem[checksum] = nMap.Score
