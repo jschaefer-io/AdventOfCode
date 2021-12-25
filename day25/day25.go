@@ -32,14 +32,14 @@ func Solve(data string, result *orchestration.Result) error {
 		}
 	}
 
-	stepCound := 0
+	stepCount := 0
 	for {
-		stepCound++
+		stepCount++
 		if !floor.Step() {
 			break
 		}
 	}
-	result.AddResult(strconv.Itoa(stepCound))
+	result.AddResult(strconv.Itoa(stepCount))
 	return nil
 }
 
