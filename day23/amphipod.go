@@ -11,10 +11,14 @@ func (amp *Amphipod) GetPaths(current Position, m *Map) []AmphipodPath {
         for _, path := range m.GetPaths(n, current) {
             if amp.ValidatePath(current, path, m) {
                 count := len(path)
-                paths = append(paths, AmphipodPath{
+                ap := AmphipodPath{
                     destination: path[count-1],
                     count:       count,
-                })
+                }
+                if ap.ReachesDestination(amp.Destination, m) {
+                    return []AmphipodPath{ap}
+                }
+                paths = append(paths, ap)
             }
         }
     }

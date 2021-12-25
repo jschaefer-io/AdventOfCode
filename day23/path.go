@@ -7,6 +7,11 @@ type AmphipodPath struct {
     count       int
 }
 
+func (a *AmphipodPath) ReachesDestination(dest rune, m *Map) bool {
+    c := m.Tiles[a.destination]
+    return c.Room == dest
+}
+
 type PathCache struct {
     cache map[Position]map[Position][]Path
 }
